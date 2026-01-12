@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Halls | Hall Matrix</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="sidebar">
+        <h2>Hall Matrix</h2>
+        <ul>
+          <li><a href="/dashboard">Dashboard</a></li>
+          <li><a href="/students">Students</a></li>
+          <li class="active"><a href="/halls">Halls</a></li>
+          <li><a href="/subjects">Subjects</a></li>
+          <li><a href="/invigilators">Invigilators</a></li>
+          <li><a href="/allocation">Allocation</a></li>
+          <li><a href="/logout">Logout</a></li>
+        </ul>
+      </div>
+
+      <div class="main">
+        <div class="topbar">
+          <h1>Halls</h1>
+        </div>
+
+        <!-- ADD HALL -->
+        <div class="card">
+          <h3>Add Hall</h3>
+          <form method="POST" action="/halls/add" class="form-inline">
+            <input type="text" name="hall_no" placeholder="Hall No" required />
+            <input
+              type="number"
+              name="capacity"
+              placeholder="Capacity"
+              required
+            />
+            <input type="text" name="block" placeholder="Block" required />
+            <button>Add</button>
+          </form>
+        </div>
+
+        <!-- HALL TABLE -->
+        <div class="card">
+          <h3>Hall List</h3>
+<table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Hall No</th>
+                <th>Capacity</th>
+                <th>Block</th>
+              </tr>
+            </thead>
+			  <tbody>
+          <% if (halls.length > 0) { %>         
+          
+              <% halls.forEach(hall => { %>
+              <tr>
+                <td><%= hall.id %></td>
+                <td><%= hall.hall_no %></td>
+                <td><%= hall.capacity %></td>
+                <td><%= hall.block %></td>
+                <td>
+                  <form
+                    method="POST"
+                    action="/halls/delete/<%= hall.id %>"
+                    onsubmit="return confirm('Delete this hall?')"
+                  >
+                    <button class="danger" type="submit">Delete</button>
+                  </form>
+                </td>
+              </tr>
+              <% }) %>
+			  <% } else { %>
+          <tr><td colspan="4">No subjects found</td></tr>
+        <% } %>
+            </tbody>
+          </table>
+    </div>
+  </body>
+</html>

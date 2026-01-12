@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="sidebar">
+        <h2>Hall Matrix</h2>
+        <ul>
+          <li class="active"><a href="/dashboard">Dashboard</a></li>
+          <li><a href="/students">Students</a></li>
+          <li><a href="/halls">Halls</a></li>
+          <li><a href="/subjects">Subjects</a></li>
+
+          <li><a href="/invigilators">Invigilators</a></li>
+          <li><a href="/allocation">Allocation</a></li>
+          <li class="logout"><a href="/logout">Logout</a></li>
+        </ul>
+      </div>
+
+      <div class="main">
+        <div class="topbar">
+          <h1>Dashboard</h1>
+          <br />
+          <p class="subtitle">Hall Allocation Management System</p>
+        </div>
+
+        <div class="dashboard-grid">
+          <a href="/students" class="dash-card">
+            <div class="icon">🎓</div>
+            <h3>Students</h3>
+            <p>Manage student records & uploads</p>
+          </a>
+
+          <a href="/subjects" class="dash-card">
+            <div class="icon">📘</div>
+            <h3>Subjects</h3>
+            <p>Add & view subject details</p>
+          </a>
+
+          <a href="/halls" class="dash-card">
+            <div class="icon">🏫</div>
+            <h3>Halls</h3>
+            <p>Hall capacity & block info</p>
+          </a>
+
+          <a href="/invigilators" class="dash-card">
+            <div class="icon">👨‍🏫</div>
+            <h3>Invigilators</h3>
+            <p>Faculty invigilation list</p>
+          </a>
+
+          <a href="/allocation" class="dash-card highlight">
+            <div class="icon">🧮</div>
+            <h3>Allocation</h3>
+            <p>Generate hall allocation</p>
+          </a>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

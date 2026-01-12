@@ -1,0 +1,39 @@
+<div class="sidebar">
+  <div class="brand">
+    <div class="logo">HM</div>
+    <span>CCET</span>
+  </div>
+
+  <nav>
+    <a
+      href="/dashboard"
+      class="<%= currentPage === 'dashboard' ? 'active' : '' %>"
+      >Dashboard</a
+    >
+    <a
+      href="/students"
+      class="<%= currentPage === 'students' ? 'active' : '' %>"
+      >Students</a
+    >
+    <a
+      href="/subjects"
+      class="<%= currentPage === 'subjects' ? 'active' : '' %>"
+      >Subjects</a
+    >
+    <a href="/halls" class="<%= currentPage === 'halls' ? 'active' : '' %>"
+      >Halls</a
+    >
+    <a
+      href="/invigilators"
+      class="<%= currentPage === 'invigilators' ? 'active' : '' %>"
+      >Invigilators</a
+    >
+
+    <a
+      href="/allocation"
+      class="<%= currentPage === 'allocation' ? 'active' : '' %>"
+      >Allocation</a
+    >
+    <a href="/logout" class="logout">Logout</a>
+  </nav>
+</div>

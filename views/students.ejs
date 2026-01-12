@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Students | Hall Matrix</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+
+  <body>
+    <div class="container">
+      <div class="sidebar">
+        <h2>Hall Matrix</h2>
+        <ul>
+          <li><a href="/dashboard">Dashboard</a></li>
+          <li class="active"><a href="/students">Students</a></li>
+          <li><a href="/halls">Halls</a></li>
+          <li><a href="/subjects">Subjects</a></li>
+          <li><a href="/invigilators">Invigilators</a></li>
+          <li><a href="/allocation">Allocation</a></li>
+          <li><a href="/logout">Logout</a></li>
+        </ul>
+      </div>
+
+      <!-- MAIN CONTENT -->
+      <div class="main">
+        <div class="topbar">
+          <h1>Students</h1>
+        </div>
+
+        <!-- ADD STUDENT -->
+        <div class="card">
+          <h3>Add Student</h3>
+          <form method="POST" action="/students/add" class="form-inline">
+            <input
+              type="text"
+              name="regno"
+              placeholder="Register No"
+              required
+            />
+            <input type="text" name="dept" placeholder="Department" required />
+            <input
+              type="text"
+              name="subject_code"
+              placeholder="Subject Code"
+              required
+            />
+            <button type="submit">Add</button>
+          </form>
+        </div>
+
+        <!-- UPLOAD STUDENTS -->
+        <div class="card">
+          <h3>Upload Students (Excel)</h3>
+          <form
+            method="POST"
+            action="/students/upload"
+            enctype="multipart/form-data"
+          >
+            <input type="file" name="excelFile" required />
+            <button type="submit">Upload</button>
+          </form>
+        </div>
+
+        <!-- STUDENT TABLE -->
+        <div class="card">
+          <h3>Student List</h3>
+<table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Register No</th>
+                <th>Department</th>
+                <th>Subject Code</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+          <% if (students.length >  0) { %>
+        
+          
+
+          
+              <% students.forEach(student => { %>
+              <tr>
+                <td><%= student.id %></td>
+                <td><%= student.regno %></td>
+                <td><%= student.dept %></td>
+                <td><%= student.subject_code %></td>
+                <td>
+                  <form
+                    method="POST"
+                    action="/students/delete/<%= student.id %>"
+                    onsubmit="return confirm('Delete this student?')"
+                  >
+                    <button class="danger" type="submit">Delete</button>
+                  </form>
+                </td>
+              </tr>
+              <% }) %>
+			  <% } else { %>
+          <tr><td colspan="4">No subjects found</td></tr>
+        <% } %>
+            </tbody>
+          </table>
+
+         
+    </div>
+  </body>
+</html>

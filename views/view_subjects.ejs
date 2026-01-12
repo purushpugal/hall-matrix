@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Subjects | Hall Matrix</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+	 <div class="container">
+      <div class="sidebar">
+        <h2>Hall Matrix</h2>	
+        <ul>
+          <li><a href="/dashboard">Dashboard</a></li>
+          <li><a href="/students">Students</a></li>
+          <li ><a href="/halls">Halls</a></li>
+          <li class="active"><a href="/subjects">Subjects</a></li>
+          <li><a href="/invigilators">Invigilators</a></li>
+          <li><a href="/allocation">Allocation</a></li>
+          <li><a href="/logout">Logout</a></li>
+        </ul>
+      </div>
+<div class="main">
+        <div class="topbar">
+          <h1>Subjects</h1>
+        </div>
+ <div class="card">
+          <h3>Add Hall</h3>
+    <form action="/subjects/add" method="POST" class="form-inline">
+      <input type="text" name="code" placeholder="Subject Code" required>
+      <input type="text" name="name" placeholder="Subject Name" required>
+      <button type="submit">Add Subject</button>
+    </form>
+</div>
+<div class="card">
+          <h3>Subject List</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Code</th>
+          <th>Name</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if(subjects.length > 0) { %>
+          <% subjects.forEach(subject => { %>
+            <tr>
+              <td><%= subject.id %></td>
+              <td><%= subject.code %></td>
+              <td><%= subject.name %></td>
+              <td>
+                <form action="/subjects/delete/<%= subject.id %>" method="POST" onsubmit="return confirm('Delete this subject?');">
+                  <button type="submit">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        <% } else { %>
+          <tr><td colspan="4">No subjects found</td></tr>
+        <% } %>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
+	

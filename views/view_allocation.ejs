@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Allocation Result</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div class="container">
+  <div class="main">
+    <div class="card">
+      <h3>Allocation Result</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Reg No</th>
+            <th>Hall</th>
+            <th>Subject</th>
+            <th>Date</th>
+            <th>Session</th>
+            <th>Invigilator</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% allocations.forEach(a => { %>
+          <tr>
+            <td><%= a.reg_no %></td>
+            <td><%= a.hall_no %></td>
+            <td><%= a.subject_code %></td>
+            <td><%= a.exam_date %></td>
+            <td><%= a.session %></td>
+            <td><%= a.invigilator %></td>
+          </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

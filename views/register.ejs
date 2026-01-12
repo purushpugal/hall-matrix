@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Hall Matrix | Register</title>
+
+    <!-- Global CSS -->
+    <link rel="stylesheet" href="/css/style.css" />
+
+    <style>
+      body {
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        font-family: "Segoe UI", sans-serif;
+      }
+
+      .register-card {
+        width: 420px;
+        padding: 30px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(12px);
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+        color: white;
+      }
+
+      .logo {
+        width: 90px;
+        height: 90px;
+        margin: auto;
+        margin-bottom: 15px;
+        border-radius: 50%;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #0f172a;
+        font-size: 26px;
+        font-weight: bold;
+      }
+
+      h2 {
+        text-align: center;
+        margin-bottom: 20px;
+        letter-spacing: 1px;
+      }
+
+      .field {
+        position: relative;
+        margin-bottom: 18px;
+      }
+
+      .field input,
+      .field select {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        border: none;
+        outline: none;
+        font-size: 14px;
+      }
+
+      .field label {
+        position: absolute;
+        top: 50%;
+        left: 12px;
+        color: #666;
+        font-size: 12px;
+        transform: translateY(-50%);
+        pointer-events: none;
+        transition: 0.3s;
+        background: white;
+        padding: 0 5px;
+      }
+
+      .field input:focus + label,
+      .field input:not(:placeholder-shown) + label,
+      .field select:focus + label {
+        top: -7px;
+        font-size: 11px;
+        color: #0f172a;
+      }
+
+      button {
+        width: 100%;
+        padding: 12px;
+        border-radius: 10px;
+        border: none;
+        background: #38bdf8;
+        color: #0f172a;
+        font-weight: bold;
+        font-size: 15px;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #0ea5e9;
+      }
+
+      .error {
+        color: #fca5a5;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+
+      .login-link {
+        text-align: center;
+        margin-top: 15px;
+        font-size: 14px;
+      }
+
+      .login-link a {
+        color: #38bdf8;
+        text-decoration: none;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="register-card">
+      <!-- LOGO -->
+      <div class="logo">HM</div>
+
+      <h2>Create Account</h2>
+
+      <% if (message) { %>
+      <div class="error"><%= message %></div>
+      <% } %>
+
+      <form action="/register" method="POST">
+        <div class="field">
+          <input type="text" name="name" required placeholder=" " />
+          <label>Full Name</label>
+        </div>
+
+        <div class="field">
+          <input type="text" name="username" required placeholder=" " />
+          <label>Username</label>
+        </div>
+
+        <div class="field">
+          <input type="password" name="password" required placeholder=" " />
+          <label>Password</label>
+        </div>
+
+        <div class="field">
+          <select name="role" required>
+            <option value="" disabled selected hidden></option>
+            <option value="admin">Admin</option>
+            <option value="tutor">Tutor</option>
+          </select>
+          <label>Role</label>
+        </div>
+
+        <button type="submit">Register</button>
+      </form>
+
+      <div class="login-link">
+        Already have an account?
+        <a href="/login">Login</a>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Upload Students</title>
+    <link rel="stylesheet" href="/style.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  </head>
+  <body>
+    <div class="container">
+      <%- include("partials/sidebar", { user: user, currentPage: 'upload' }) %>
+      <main class="content">
+        <%- include("partials/header", { user: user }) %>
+
+        <h2>Upload Students Excel</h2>
+
+        <form
+          action="/students/excel-upload"
+          method="POST"
+          enctype="multipart/form-data"
+          class="form-card"
+        >
+          <input type="file" name="excelFile" accept=".xlsx" required />
+          <button type="submit">Upload</button>
+        </form>
+      </main>
+    </div>
+  </body>
+</html>

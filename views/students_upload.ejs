@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Students</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div class="container">
+
+  <div class="sidebar">
+    <h2>HM CCET</h2>
+    <ul>
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li class="active"><a href="/students">Students</a></li>
+      <li><a href="/subjects">Subjects</a></li>
+      <li><a href="/halls">Halls</a></li>
+      <li><a href="/invigilators">Invigilators</a></li>
+      <li><a href="/allocation">Allocation</a></li>
+      <li class="logout"><a href="/logout">Logout</a></li>
+    </ul>
+  </div>
+
+  <div class="main">
+
+    <div class="topbar">
+      Logged in as: <b><%= user.name %></b> (<%= user.role %>)
+    </div>
+
+    <div class="card">
+      <h3>Add Student</h3>
+      <form method="POST" action="/students/add" class="form-inline">
+        <input name="reg_no" placeholder="Register No" required>
+        <input name="dept" placeholder="Department" required>
+        <input name="subject_code" placeholder="Subject Code" required>
+        <button>Add</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h3>Student List</h3>
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Register No</th>
+            <th>Department</th>
+            <th>Subject</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% students.forEach(s => { %>
+            <tr>
+              <td><%= s.id %></td>
+              <td><%= s.reg_no %></td>
+              <td><%= s.dept %></td>
+              <td><%= s.subject_code %></td>
+              <td>
+                <form method="POST" action="/students/delete/<%= s.id %>">
+                  <button class="danger">Delete</button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Invigilators | Hall Matrix</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="sidebar">
+        <h2>Hall Matrix</h2>
+        <ul>
+          <li><a href="/dashboard">Dashboard</a></li>
+          <li><a href="/students">Students</a></li>
+          <li ><a href="/halls">Halls</a></li>
+          <li><a href="/subjects">Subjects</a></li>
+          <li class="active"><a href="/invigilators">Invigilators</a></li>
+          <li><a href="/allocation">Allocation</a></li>
+          <li><a href="/logout">Logout</a></li>
+        </ul>
+      </div>
+
+    <div class="main">
+        <div class="topbar">
+          <h1>Invigilators</h1>
+        </div>
+
+<div class="card">
+<h3>Add invigilators</h3>
+      <form action="/invigilators/add" method="POST" class="form-inline">
+        <input type="text" name="name" placeholder="Name" required />
+        <input type="text" name="dept" placeholder="Department" required />
+        <button type="submit">Add Invigilator</button>
+      </form>
+</div>
+           <div class="card">
+          <h3>Invigilators List</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if(invigilators.length > 0) { %> <% invigilators.forEach(inv => {
+          %>
+          <tr>
+            <td><%= inv.id %></td>
+            <td><%= inv.name %></td>
+            <td><%= inv.dept %></td>
+            <td>
+              <form
+                action="/invigilators/delete/<%= inv.id %>"
+                method="POST"
+                onsubmit="return confirm('Delete this invigilator?');"
+              >
+                <button type="submit">Delete</button>
+              </form>
+            </td>
+          </tr>
+          <% }) %> <% } else { %>
+          <tr>
+            <td colspan="4">No invigilators found</td>
+          </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>
