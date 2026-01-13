@@ -1,13 +1,46 @@
-<div class="card">
-  <h3>Generate Allocation</h3>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Allocation | Hall Matrix</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
 
-  <form method="POST" action="/allocation/generate" class="form-inline">
-    <input type="text" name="subject_code" placeholder="Subject Code" required />
-    <input type="date" name="exam_date" required />
-    <select name="session" required>
-      <option value="FN">FN</option>
-      <option value="AN">AN</option>
-    </select>
-    <button type="submit">Generate</button>
-  </form>
+<div class="container">
+
+  <div class="sidebar">
+    <h2>Hall Matrix</h2>
+    <ul>
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/students">Students</a></li>
+      <li><a href="/halls">Halls</a></li>
+      <li><a href="/subjects">Subjects</a></li>
+      <li><a href="/invigilators">Invigilators</a></li>
+      <li class="active"><a href="/allocation">Allocation</a></li>
+      <li><a href="/logout">Logout</a></li>
+    </ul>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <h1>Seat Allocation</h1>
+    </div>
+
+    <div class="card">
+      <form method="POST" action="/allocation/generate" class="form-inline">
+        <input name="subject_codes" placeholder="CS101,CS102" required>
+        <input type="date" name="exam_date" required>
+        <select name="session" required>
+          <option value="">Session</option>
+          <option value="FN">FN</option>
+          <option value="AN">AN</option>
+        </select>
+        <button type="submit">Generate Preview</button>
+      </form>
+    </div>
+  </div>
+
 </div>
+
+</body>
+</html>

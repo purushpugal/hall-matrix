@@ -1,65 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Allocation | Hall Matrix</title>
-  <link rel="stylesheet" href="/style.css" />
+  <meta charset="UTF-8">
+  <title>Allocation Preview</title>
+  <link rel="stylesheet" href="/style.css">
 </head>
-
 <body>
-  <div class="container">
 
-    <!-- SIDEBAR -->
-    <div class="sidebar">
-      <h2>Hall Matrix</h2>
-      <ul>
-        <li><a href="/dashboard">Dashboard</a></li>
-        <li><a href="/students">Students</a></li>
-        <li><a href="/halls">Halls</a></li>
-        <li><a href="/subjects">Subjects</a></li>
-        <li><a href="/invigilators">Invigilators</a></li>
-        <li class="active"><a href="/allocation">Allocation</a></li>
-        <li><a href="/logout">Logout</a></li>
-      </ul>
-    </div>
+<div class="container">
 
-    <!-- MAIN CONTENT -->
-    <div class="main">
-
-      <div class="topbar">
-        <h1>Seat Allocation</h1>
-        <p>Generate exam seating arrangement</p>
-      </div>
-
-      <div class="card">
-        <h3>Allocation Input</h3>
-
-        <form method="POST" action="/allocation/generate" class="form-inline">
-
-          <input
-            type="text"
-            name="subject_codes"
-            placeholder="Subject Codes (CS101,CS102)"
-            required
-          />
-
-          <input
-            type="date"
-            name="exam_date"
-            required
-          />
-
-          <select name="session" required>
-            <option value="">Select Session</option>
-            <option value="FN">FN</option>
-            <option value="AN">AN</option>
-          </select>
-
-          <button type="submit">Generate Preview</button>
-        </form>
-      </div>
-
-    </div>
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <h2>Hall Matrix</h2>
+    <ul>
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/students">Students</a></li>
+      <li><a href="/halls">Halls</a></li>
+      <li><a href="/subjects">Subjects</a></li>
+      <li><a href="/invigilators">Invigilators</a></li>
+      <li class="active"><a href="/allocation">Allocation</a></li>
+      <li><a href="/logout">Logout</a></li>
+    </ul>
   </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="main">
+
+    <div class="topbar">
+      <h1>Seat Allocation Preview</h1>
+      <div>
+        <a href="/allocation/pdf" class="pdf-btn">Download PDF</a>
+      </div>
+    </div>
+
+    <% if (!preview || preview.length === 0) { %>
+      <div class="card">
+        <p>No allocation data available</p>
+      </div>
+    <% } else { %>
+
+      <% let currentHall = ""; %>
+
+      <% preview.forEach((p, index) => { %>
+
+        <% if (currentHall !== p.hall_no) { %>
+
+          <% if (currentHall !== "") { %>
+              </tbody>
+            </table>
+          </div>
+          <% } %>
+
+          <% currentHall = p.hall_no; %>
+
+          <div class="card">
+            <h3>
+              Hall: <%= p.hall_no %> |
+              Invigilator: <%= p.invigilator %>
+            </h3>
+
+            <table class="seat-table">
+              <thead>
+                <tr>
+                  <th>A</th>
+                  <th>B</th>
+                  <th>C</th>
+                  <th>D</th>
+                </tr>
+              </thead>
+              <tbody>
+        <% } %>
+
+        <% if (index % 4 === 0) { %>
+          <tr>
+        <% } %>
+
+          <td>
+            <strong><%= p.seat %></strong><br>
+            <%= p.regno %><br>
+            (<%= p.dept %>)
+          </td>
+
+        <% if (index % 4 === 3) { %>
+          </tr>
+        <% } %>
+
+      <% }) %>
+
+              </tbody>
+            </table>
+          </div>
+
+    <% } %>
+
+  </div>
+</div>
+
 </body>
 </html>

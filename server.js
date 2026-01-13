@@ -11,6 +11,7 @@ const multer = require("multer");
 const fs = require("fs");
 const XLSX = require("xlsx");
 const allocateStudents = require("./utils/allocationLogic");
+const PDFDocument = require("pdfkit");
 
 /* =======================
    2. APP & DB
@@ -45,6 +46,28 @@ const upload = multer({ dest: "uploads/" });
 function requireLogin(req, res, next) {
   if (!req.session.user) return res.redirect("/login");
   next();
+}
+function generateSeats(students) {
+  // Group students by dept
+  const byDept = {};
+  students.forEach((s) => {
+    if (!byDept[s.dept]) byDept[s.dept] = [];
+    byDept[s.dept].push(s);
+  });
+
+  const depts = Object.keys(byDept);
+  let result = [];
+
+  // RULE 1: mix departments
+  while (Object.values(byDept).some((arr) => arr.length)) {
+    for (let d of depts) {
+      if (byDept[d].length) {
+        result.push(byDept[d].shift());
+      }
+    }
+  }
+
+  return result;
 }
 
 /* =======================
@@ -291,28 +314,111 @@ app.get("/allocation", requireLogin, (req, res) => {
 
 app.post("/allocation/generate", requireLogin, (req, res) => {
   const { subject_codes, exam_date, session } = req.body;
+  const codes = subject_codes.split(",").map((c) => c.trim());
 
-  if (!subject_codes) {
-    return res.send("❌ subject_codes missing from form");
-  }
+  db.all(
+    `SELECT * FROM students WHERE subject_code IN (${codes
+      .map(() => "?")
+      .join(",")})`,
+    codes,
+    (err, students) => {
+      if (err || students.length === 0) return res.send("No students found");
 
-  const codes = subject_codes
-    .split(",")
-    .map((c) => c.trim())
-    .filter(Boolean);
+      db.all("SELECT * FROM halls", (err, halls) => {
+        if (err) return res.send("Hall error");
 
-  console.log("SUBJECT CODES:", codes);
-  console.log("DATE:", exam_date, "SESSION:", session);
+        db.all("SELECT * FROM invigilators", (err, invs) => {
+          if (err) return res.send("Invigilator error");
 
-  res.send("Allocation input received correctly");
+          const mixed = generateSeats(students);
+          let allocations = [];
+          let seatIndex = 0;
+
+          const seatCols = ["A", "B", "C", "D"];
+          const zigzag = [1, 10, 2, 11, 3, 4, 12, 5, 13, 6, 7, 14, 8, 15, 9];
+
+          halls.forEach((hall, hIndex) => {
+            let inv = invs[hIndex % invs.length]?.name || "NA";
+
+            for (
+              let i = 0;
+              i < hall.capacity && seatIndex < mixed.length;
+              i++
+            ) {
+              const row = Math.floor(i / 4) + 1;
+              const col = seatCols[i % 4];
+              const seat = col + row;
+
+              allocations.push({
+                hall_no: hall.hall_no,
+                seat,
+                regno: mixed[seatIndex].regno,
+                dept: mixed[seatIndex].dept,
+                subject_code: mixed[seatIndex].subject_code,
+                exam_date,
+                session,
+                invigilator: inv,
+              });
+
+              seatIndex++;
+            }
+          });
+
+          req.session.preview = allocations;
+          res.redirect("/allocation/preview");
+        });
+      });
+    }
+  );
 });
-
 
 app.get("/allocation/view", requireLogin, (req, res) => {
   db.all("SELECT * FROM allocations", (err, rows) => {
     res.render("view_allocation", { allocations: rows });
   });
 });
+app.get("/allocation/preview", requireLogin, (req, res) => {
+  if (!req.session.preview || req.session.preview.length === 0) {
+    return res.send("No allocation preview found");
+  }
+
+  res.render("allocation_preview", {
+    preview: req.session.preview,
+    date: req.session.preview[0].exam_date,
+    session: req.session.preview[0].session,
+  });
+});
+
+
+
+app.get("/allocation/pdf", requireLogin, (req, res) => {
+  if (!req.session.preview) {
+    return res.send("No allocation preview found");
+  }
+
+  const doc = new PDFDocument({ margin: 30 });
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader("Content-Disposition", "inline; filename=allocation.pdf");
+
+  doc.pipe(res);
+
+  let currentHall = "";
+
+  req.session.preview.forEach((p) => {
+    if (currentHall !== p.hall_no) {
+      currentHall = p.hall_no;
+      doc.addPage();
+      doc.fontSize(16).text(`Hall: ${p.hall_no}`);
+      doc.fontSize(12).text(`Invigilator: ${p.invigilator}`);
+      doc.moveDown();
+    }
+
+    doc.fontSize(10).text(`${p.seat} - ${p.regno} (${p.dept})`);
+  });
+
+  doc.end();
+});
+
 
 /* =======================
    14. SERVER

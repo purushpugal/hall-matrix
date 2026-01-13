@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Allocation Preview</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<div class="main">
+
+  <div class="topbar">
+    <h1>Seat Allocation Preview</h1>
+    <p>Date: <%= date %> | Session: <%= session %></p>
+  </div>
+
+  <% let currentHall = ""; %>
+
+<% preview.forEach((a, index) => { %>
+
+  <% if (currentHall !== a.hall_no) { %>
+    <% if (currentHall !== "") { %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+
+    <% currentHall = a.hall_no; %>
+
+    <div class="card">
+      <h3>
+        Hall: <%= a.hall_no %> |
+        Invigilator: <%= a.invigilator %>
+      </h3>
+
+      <table class="seat-table">
+        <thead>
+          <tr>
+            <th>A</th>
+            <th>B</th>
+            <th>C</th>
+            <th>D</th>
+          </tr>
+        </thead>
+        <tbody>
+  <% } %>
+
+  <% if (index % 4 === 0) { %>
+    <tr>
+  <% } %>
+
+    <td>
+      <strong><%= a.seat %></strong><br>
+      <%= a.regno %><br>
+      (<%= a.dept %>)
+    </td>
+
+  <% if (index % 4 === 3) { %>
+    </tr>
+  <% } %>
+
+<% }) %>
+
+</div>
+
+</body>
+</html>

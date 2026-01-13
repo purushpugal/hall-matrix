@@ -85,7 +85,7 @@ body {
   padding: 15px 20px;
   border-radius: 10px;
   margin-bottom: 25px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 /* ===============================
@@ -96,7 +96,7 @@ body {
   padding: 25px;
   border-radius: 12px;
   margin-bottom: 25px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .card h3 {
@@ -195,7 +195,7 @@ td {
   padding: 25px;
   text-decoration: none;
   color: #222;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -213,7 +213,7 @@ td {
 
 .dash-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 20px 35px rgba(0,0,0,0.15);
+  box-shadow: 0 20px 35px rgba(0, 0, 0, 0.15);
 }
 
 .dash-card .icon {
@@ -239,4 +239,38 @@ td {
 
 .dash-card.highlight p {
   color: #e0eaff;
+}
+/* ===== SEAT PREVIEW ===== */
+
+.seat-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+.seat-table th {
+  background: #1e293b;
+  color: white;
+  padding: 10px;
+}
+
+.seat-table td {
+  border: 1px solid #e5e7eb;
+  padding: 12px;
+  text-align: center;
+  font-size: 14px;
+}
+
+.seat-table small {
+  color: #555;
+}
+
+.pdf-btn {
+  display: inline-block;
+  margin-left: 15px;
+  padding: 10px 16px;
+  background: #16a34a;
+  color: white;
+  text-decoration: none;
+  border-radius: 6px;
 }
