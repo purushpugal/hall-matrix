@@ -3,6 +3,12 @@ console.log("✅ server.js loaded");
 /* =======================
    1. IMPORTS
 ======================= */
+const {
+  allocateRule1,
+  allocateRule2,
+  getSeatLabel,
+} = require("./utils/allocationLogic");
+
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const path = require("path");
@@ -10,7 +16,7 @@ const session = require("express-session");
 const multer = require("multer");
 const fs = require("fs");
 const XLSX = require("xlsx");
-const allocateStudents = require("./utils/allocationLogic");
+
 const PDFDocument = require("pdfkit");
 
 /* =======================
@@ -47,28 +53,7 @@ function requireLogin(req, res, next) {
   if (!req.session.user) return res.redirect("/login");
   next();
 }
-function generateSeats(students) {
-  // Group students by dept
-  const byDept = {};
-  students.forEach((s) => {
-    if (!byDept[s.dept]) byDept[s.dept] = [];
-    byDept[s.dept].push(s);
-  });
 
-  const depts = Object.keys(byDept);
-  let result = [];
-
-  // RULE 1: mix departments
-  while (Object.values(byDept).some((arr) => arr.length)) {
-    for (let d of depts) {
-      if (byDept[d].length) {
-        result.push(byDept[d].shift());
-      }
-    }
-  }
-
-  return result;
-}
 
 /* =======================
    6. DATABASE TABLES
@@ -314,6 +299,8 @@ app.get("/allocation", requireLogin, (req, res) => {
 
 app.post("/allocation/generate", requireLogin, (req, res) => {
   const { subject_codes, exam_date, session } = req.body;
+  if (!subject_codes) return res.send("Subject codes required");
+
   const codes = subject_codes.split(",").map((c) => c.trim());
 
   db.all(
@@ -325,43 +312,47 @@ app.post("/allocation/generate", requireLogin, (req, res) => {
       if (err || students.length === 0) return res.send("No students found");
 
       db.all("SELECT * FROM halls", (err, halls) => {
-        if (err) return res.send("Hall error");
+        if (err || halls.length === 0) return res.send("No halls found");
 
         db.all("SELECT * FROM invigilators", (err, invs) => {
           if (err) return res.send("Invigilator error");
 
-          const mixed = generateSeats(students);
           let allocations = [];
-          let seatIndex = 0;
-
-          const seatCols = ["A", "B", "C", "D"];
-          const zigzag = [1, 10, 2, 11, 3, 4, 12, 5, 13, 6, 7, 14, 8, 15, 9];
+          let studentIndex = 0;
 
           halls.forEach((hall, hIndex) => {
-            let inv = invs[hIndex % invs.length]?.name || "NA";
+            const hallStudents = students.slice(
+              studentIndex,
+              studentIndex + hall.capacity
+            );
 
-            for (
-              let i = 0;
-              i < hall.capacity && seatIndex < mixed.length;
-              i++
-            ) {
-              const row = Math.floor(i / 4) + 1;
-              const col = seatCols[i % 4];
-              const seat = col + row;
+            if (hallStudents.length === 0) return;
 
-              allocations.push({
-                hall_no: hall.hall_no,
-                seat,
-                regno: mixed[seatIndex].regno,
-                dept: mixed[seatIndex].dept,
-                subject_code: mixed[seatIndex].subject_code,
-                exam_date,
-                session,
-                invigilator: inv,
+            // 🔥 APPLY RULE-1 → FALLBACK TO RULE-2
+            const grid =
+              allocateRule1(hallStudents, hall.capacity) ||
+              allocateRule2(hallStudents, hall.capacity);
+
+            const inv = invs[hIndex % invs.length]?.name || "NA";
+
+            grid.forEach((rowArr, r) => {
+              rowArr.forEach((student, c) => {
+                if (!student) return;
+
+                allocations.push({
+                  hall_no: hall.hall_no,
+                  seat: getSeatLabel(r * 4 + c),
+                  regno: student.regno,
+                  dept: student.dept,
+                  subject_code: student.subject_code,
+                  exam_date,
+                  session,
+                  invigilator: inv,
+                });
               });
+            });
 
-              seatIndex++;
-            }
+            studentIndex += hall.capacity;
           });
 
           req.session.preview = allocations;
@@ -371,6 +362,7 @@ app.post("/allocation/generate", requireLogin, (req, res) => {
     }
   );
 });
+
 
 app.get("/allocation/view", requireLogin, (req, res) => {
   db.all("SELECT * FROM allocations", (err, rows) => {

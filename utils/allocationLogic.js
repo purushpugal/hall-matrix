@@ -1,93 +1,86 @@
-module.exports = function allocateStudents({
-  students,
-  halls,
-  date,
-  session,
-  invigilator,
-}) {
-  // Shuffle students for better mixing
-  students = students.sort(() => Math.random() - 0.5);
+function getSeatLabel(index) {
+  const cols = ["A", "B", "C", "D"];
+  const row = Math.floor(index / 4) + 1;
+  const col = cols[index % 4];
+  return col + row;
+}
 
-  let allocations = [];
-  let studentIndex = 0;
+function canPlace(grid, index, student) {
+  const row = Math.floor(index / 4);
+  const col = index % 4;
 
-  for (const hall of halls) {
-    const seats = hall.rows * hall.cols;
+  const neighbors = [];
 
-    // Build empty matrix
-    let matrix = Array.from({ length: hall.rows }, () =>
-      Array(hall.cols).fill(null)
-    );
+  // left
+  if (col > 0) neighbors.push(grid[row][col - 1]);
+  // right
+  if (col < 3) neighbors.push(grid[row][col + 1]);
+  // front
+  if (row > 0) neighbors.push(grid[row - 1][col]);
+  // back
+  if (grid[row + 1]) neighbors.push(grid[row + 1][col]);
 
-    for (let r = 0; r < hall.rows; r++) {
-      for (let c = 0; c < hall.cols; c++) {
-        if (studentIndex >= students.length) break;
+  return neighbors.every((n) => !n || n.dept !== student.dept);
+}
 
-        let placed = false;
+function allocateRule1(students, capacity) {
+  const grid = [];
+  const used = new Set();
 
-        for (let i = studentIndex; i < students.length; i++) {
-          const student = students[i];
+  const rows = Math.ceil(capacity / 4);
 
-          // Check adjacency rule
-          if (isSafe(matrix, r, c, student.dept)) {
-            matrix[r][c] = student;
+  for (let r = 0; r < rows; r++) {
+    grid[r] = new Array(4).fill(null);
+  }
 
-            allocations.push({
-              hall_no: hall.hall_no,
-              row: r + 1,
-              col: c + 1,
-              regno: student.regno,
-              dept: student.dept,
-              exam_date: date,
-              session,
-              invigilator,
-            });
+  for (let i = 0; i < capacity; i++) {
+    let placed = false;
 
-            students.splice(i, 1);
-            placed = true;
-            break;
-          }
-        }
+    for (let s = 0; s < students.length; s++) {
+      if (used.has(s)) continue;
 
-        if (!placed && students.length > 0) {
-          // Rule-2 fallback (same dept allowed)
-          const student = students.shift();
-          matrix[r][c] = student;
+      const student = students[s];
+      const row = Math.floor(i / 4);
+      const col = i % 4;
 
-          allocations.push({
-            hall_no: hall.hall_no,
-            row: r + 1,
-            col: c + 1,
-            regno: student.regno,
-            dept: student.dept,
-            exam_date: date,
-            session,
-            invigilator,
-          });
-        }
+      if (canPlace(grid, i, student)) {
+        grid[row][col] = student;
+        used.add(s);
+        placed = true;
+        break;
       }
     }
-  }
 
-  return allocations;
-};
-
-// 🔒 adjacency checker
-function isSafe(matrix, r, c, dept) {
-  const directions = [
-    [-1, 0], // front
-    [1, 0], // back
-    [0, -1], // left
-    [0, 1], // right
-  ];
-
-  for (const [dr, dc] of directions) {
-    const nr = r + dr;
-    const nc = c + dc;
-
-    if (matrix[nr] && matrix[nr][nc] && matrix[nr][nc].dept === dept) {
-      return false;
+    if (!placed) {
+      return null; // trigger Rule 2
     }
   }
-  return true;
+
+  return grid;
 }
+
+function allocateRule2(students, capacity) {
+  const zigzag = [0, 9, 1, 10, 2, 3, 11, 4, 12, 5, 6, 13, 7, 14, 8];
+
+  const grid = [];
+  const rows = Math.ceil(capacity / 4);
+
+  for (let r = 0; r < rows; r++) {
+    grid[r] = new Array(4).fill(null);
+  }
+
+  zigzag.forEach((pos, i) => {
+    if (!students[i]) return;
+    const row = Math.floor(pos / 4);
+    const col = pos % 4;
+    grid[row][col] = students[i];
+  });
+
+  return grid;
+}
+
+module.exports = {
+  allocateRule1,
+  allocateRule2,
+  getSeatLabel,
+};
