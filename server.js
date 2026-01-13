@@ -7,6 +7,7 @@ const {
   allocateRule1,
   allocateRule2,
   getSeatLabel,
+  allocateBySubjectHallWise,
 } = require("./utils/allocationLogic");
 
 const express = require("express");
@@ -16,7 +17,6 @@ const session = require("express-session");
 const multer = require("multer");
 const fs = require("fs");
 const XLSX = require("xlsx");
-
 const PDFDocument = require("pdfkit");
 
 /* =======================
@@ -53,7 +53,25 @@ function requireLogin(req, res, next) {
   if (!req.session.user) return res.redirect("/login");
   next();
 }
+function applySeatLabels(allocations) {
+  const cols = ["A", "B", "C", "D"];
+  let hallSeatCount = {};
 
+  return allocations.map((a) => {
+    if (!hallSeatCount[a.hall_no]) hallSeatCount[a.hall_no] = 0;
+    const i = hallSeatCount[a.hall_no]++;
+    const row = Math.floor(i / 4) + 1;
+    const col = cols[i % 4];
+
+    return {
+      hall_no: a.hall_no,
+      seat: col + row,
+      regno: a.student.regno,
+      dept: a.student.dept,
+      subject_code: a.student.subject_code,
+    };
+  });
+}
 
 /* =======================
    6. DATABASE TABLES
@@ -299,9 +317,7 @@ app.get("/allocation", requireLogin, (req, res) => {
 
 app.post("/allocation/generate", requireLogin, (req, res) => {
   const { subject_codes, exam_date, session } = req.body;
-  if (!subject_codes) return res.send("Subject codes required");
-
-  const codes = subject_codes.split(",").map((c) => c.trim());
+  const codes = subject_codes.split(",").map((s) => s.trim());
 
   db.all(
     `SELECT * FROM students WHERE subject_code IN (${codes
@@ -309,66 +325,54 @@ app.post("/allocation/generate", requireLogin, (req, res) => {
       .join(",")})`,
     codes,
     (err, students) => {
-      if (err || students.length === 0) return res.send("No students found");
+      if (err || !students.length) return res.send("No students found");
 
       db.all("SELECT * FROM halls", (err, halls) => {
-        if (err || halls.length === 0) return res.send("No halls found");
+        if (err || !halls.length) return res.send("No halls found");
 
-        db.all("SELECT * FROM invigilators", (err, invs) => {
-          if (err) return res.send("Invigilator error");
+        const rawAlloc = allocateBySubjectHallWise(students, halls);
+        const preview = applySeatLabels(rawAlloc).map((p) => ({
+          ...p,
+          exam_date,
+          session,
+          invigilator: "NA",
+        }));
 
-          let allocations = [];
-          let studentIndex = 0;
-
-          halls.forEach((hall, hIndex) => {
-            const hallStudents = students.slice(
-              studentIndex,
-              studentIndex + hall.capacity
-            );
-
-            if (hallStudents.length === 0) return;
-
-            // 🔥 APPLY RULE-1 → FALLBACK TO RULE-2
-            const grid =
-              allocateRule1(hallStudents, hall.capacity) ||
-              allocateRule2(hallStudents, hall.capacity);
-
-            const inv = invs[hIndex % invs.length]?.name || "NA";
-
-            grid.forEach((rowArr, r) => {
-              rowArr.forEach((student, c) => {
-                if (!student) return;
-
-                allocations.push({
-                  hall_no: hall.hall_no,
-                  seat: getSeatLabel(r * 4 + c),
-                  regno: student.regno,
-                  dept: student.dept,
-                  subject_code: student.subject_code,
-                  exam_date,
-                  session,
-                  invigilator: inv,
-                });
-              });
-            });
-
-            studentIndex += hall.capacity;
-          });
-
-          req.session.preview = allocations;
-          res.redirect("/allocation/preview");
-        });
+        req.session.preview = preview;
+        res.redirect("/allocation/preview");
       });
     }
   );
 });
-
 
 app.get("/allocation/view", requireLogin, (req, res) => {
   db.all("SELECT * FROM allocations", (err, rows) => {
     res.render("view_allocation", { allocations: rows });
   });
 });
+app.post("/allocation/confirm", requireLogin, (req, res) => {
+  const stmt = db.prepare(`
+    INSERT INTO allocations 
+    (subject_code, hall_no, reg_no, exam_date, session, invigilator)
+    VALUES (?,?,?,?,?,?)
+  `);
+
+  req.session.preview.forEach((p) => {
+    stmt.run(
+      p.subject_code,
+      p.hall_no,
+      p.regno,
+      p.exam_date,
+      p.session,
+      p.invigilator
+    );
+  });
+
+  stmt.finalize();
+  req.session.preview = null;
+  res.redirect("/allocation/view");
+});
+
 app.get("/allocation/preview", requireLogin, (req, res) => {
   if (!req.session.preview || req.session.preview.length === 0) {
     return res.send("No allocation preview found");
@@ -380,8 +384,6 @@ app.get("/allocation/preview", requireLogin, (req, res) => {
     session: req.session.preview[0].session,
   });
 });
-
-
 
 app.get("/allocation/pdf", requireLogin, (req, res) => {
   if (!req.session.preview) {
@@ -410,7 +412,6 @@ app.get("/allocation/pdf", requireLogin, (req, res) => {
 
   doc.end();
 });
-
 
 /* =======================
    14. SERVER
