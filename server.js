@@ -342,7 +342,9 @@ app.post("/allocation/generate", requireLogin, (req, res) => {
         res.redirect("/allocation/preview");
       });
     }
+    
   );
+  
 });
 
 app.get("/allocation/view", requireLogin, (req, res) => {
