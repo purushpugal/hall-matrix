@@ -37,7 +37,7 @@ app.use(
     secret: "hallmatrix_secret",
     resave: false,
     saveUninitialized: false,
-  })
+  }),
 );
 
 /* =======================
@@ -141,7 +141,7 @@ app.post("/login", (req, res) => {
       } else {
         res.render("login", { message: "Invalid credentials" });
       }
-    }
+    },
   );
 });
 
@@ -155,7 +155,7 @@ app.post("/register", (req, res) => {
     (err) => {
       if (err) return res.render("register", { message: "Username exists" });
       res.redirect("/login");
-    }
+    },
   );
 });
 
@@ -191,7 +191,7 @@ app.post("/students/add", requireLogin, (req, res) => {
   db.run(
     "INSERT INTO students (regno, dept, subject_code) VALUES (?,?,?)",
     [regno, dept, subject_code],
-    () => res.redirect("/students")
+    () => res.redirect("/students"),
   );
 });
 
@@ -205,7 +205,7 @@ app.post(
     const data = XLSX.utils.sheet_to_json(sheet);
 
     const stmt = db.prepare(
-      "INSERT INTO students (regno, dept, subject_code) VALUES (?,?,?)"
+      "INSERT INTO students (regno, dept, subject_code) VALUES (?,?,?)",
     );
 
     data.forEach((r) => {
@@ -217,12 +217,12 @@ app.post(
     stmt.finalize();
     fs.unlinkSync(req.file.path);
     res.redirect("/students");
-  }
+  },
 );
 
 app.post("/students/delete/:id", requireLogin, (req, res) => {
   db.run("DELETE FROM students WHERE id=?", [req.params.id], () =>
-    res.redirect("/students")
+    res.redirect("/students"),
   );
 });
 
@@ -243,13 +243,13 @@ app.post("/halls/add", requireLogin, (req, res) => {
   db.run(
     "INSERT INTO halls (hall_no, capacity, block) VALUES (?,?,?)",
     [hall_no, capacity, block],
-    () => res.redirect("/halls")
+    () => res.redirect("/halls"),
   );
 });
 
 app.post("/halls/delete/:id", requireLogin, (req, res) => {
   db.run("DELETE FROM halls WHERE id=?", [req.params.id], () =>
-    res.redirect("/halls")
+    res.redirect("/halls"),
   );
 });
 
@@ -268,13 +268,13 @@ app.get("/subjects", requireLogin, (req, res) => {
 app.post("/subjects/add", requireLogin, (req, res) => {
   const { code, name } = req.body;
   db.run("INSERT INTO subjects (code, name) VALUES (?,?)", [code, name], () =>
-    res.redirect("/subjects")
+    res.redirect("/subjects"),
   );
 });
 
 app.post("/subjects/delete/:id", requireLogin, (req, res) => {
   db.run("DELETE FROM subjects WHERE id=?", [req.params.id], () =>
-    res.redirect("/subjects")
+    res.redirect("/subjects"),
   );
 });
 
@@ -283,6 +283,8 @@ app.post("/subjects/delete/:id", requireLogin, (req, res) => {
 ======================= */
 app.get("/invigilators", requireLogin, (req, res) => {
   db.all("SELECT * FROM invigilators", (err, rows) => {
+    if (err) return res.send("Database error");
+
     res.render("view_invigilators", {
       invigilators: rows,
       currentPage: "invigilators",
@@ -295,13 +297,13 @@ app.post("/invigilators/add", requireLogin, (req, res) => {
   db.run(
     "INSERT INTO invigilators (name, dept) VALUES (?,?)",
     [name, dept],
-    () => res.redirect("/invigilators")
+    () => res.redirect("/invigilators"),
   );
 });
 
 app.post("/invigilators/delete/:id", requireLogin, (req, res) => {
   db.run("DELETE FROM invigilators WHERE id=?", [req.params.id], () =>
-    res.redirect("/invigilators")
+    res.redirect("/invigilators"),
   );
 });
 
@@ -325,26 +327,55 @@ app.post("/allocation/generate", requireLogin, (req, res) => {
       .join(",")})`,
     codes,
     (err, students) => {
-      if (err || !students.length) return res.send("No students found");
+      if (err || !students.length) {
+        return res.send("No students found");
+      }
 
       db.all("SELECT * FROM halls", (err, halls) => {
-        if (err || !halls.length) return res.send("No halls found");
+        if (err || !halls.length) {
+          return res.send("No halls found");
+        }
 
-        const rawAlloc = allocateBySubjectHallWise(students, halls);
-        const preview = applySeatLabels(rawAlloc).map((p) => ({
-          ...p,
-          exam_date,
-          session,
-          invigilator: "NA",
-        }));
+        db.all("SELECT * FROM invigilators", (err, invigilators) => {
+          if (err || !invigilators.length) {
+            return res.send("No invigilators found");
+          }
 
-        req.session.preview = preview;
-        res.redirect("/allocation/preview");
+          const rawAlloc = allocateBySubjectHallWise(students, halls);
+
+          // 👉 Add seat labels
+          // 1️⃣ Apply seat labels FIRST (on raw allocation)
+          const labeledAlloc = applySeatLabels(rawAlloc);
+
+          // 2️⃣ Assign invigilator per hall
+          let invIndex = 0;
+          const hallInvMap = {};
+
+          labeledAlloc.forEach((a) => {
+            if (!hallInvMap[a.hall_no]) {
+              hallInvMap[a.hall_no] =
+                invigilators[invIndex++ % invigilators.length].name;
+            }
+          });
+
+          // 3️⃣ Final preview object
+          const preview = labeledAlloc.map((a) => ({
+            hall_no: a.hall_no,
+            seat: a.seat, // ✅ NOW EXISTS
+            regno: a.regno,
+            dept: a.dept,
+            subject_code: a.subject_code,
+            invigilator: hallInvMap[a.hall_no],
+            exam_date,
+            session,
+          }));
+
+          req.session.preview = preview;
+          res.redirect("/allocation/preview");
+        });
       });
-    }
-    
+    },
   );
-  
 });
 
 app.get("/allocation/view", requireLogin, (req, res) => {
@@ -366,7 +397,7 @@ app.post("/allocation/confirm", requireLogin, (req, res) => {
       p.regno,
       p.exam_date,
       p.session,
-      p.invigilator
+      p.invigilator,
     );
   });
 
@@ -388,29 +419,159 @@ app.get("/allocation/preview", requireLogin, (req, res) => {
 });
 
 app.get("/allocation/pdf", requireLogin, (req, res) => {
-  if (!req.session.preview) {
+  if (!req.session.preview || req.session.preview.length === 0) {
     return res.send("No allocation preview found");
   }
 
-  const doc = new PDFDocument({ margin: 30 });
-  res.setHeader("Content-Type", "application/pdf");
-  res.setHeader("Content-Disposition", "inline; filename=allocation.pdf");
+  const PDFDocument = require("pdfkit");
+  const doc = new PDFDocument({ margin: 36, size: "A4" });
 
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader(
+    "Content-Disposition",
+    "inline; filename=Exam_Hall_Seating.pdf",
+  );
   doc.pipe(res);
 
-  let currentHall = "";
+  const date = req.session.preview[0].exam_date;
+  const session = req.session.preview[0].session;
 
+  // GROUP BY HALL
+  const halls = {};
   req.session.preview.forEach((p) => {
-    if (currentHall !== p.hall_no) {
-      currentHall = p.hall_no;
-      doc.addPage();
-      doc.fontSize(16).text(`Hall: ${p.hall_no}`);
-      doc.fontSize(12).text(`Invigilator: ${p.invigilator}`);
-      doc.moveDown();
-    }
-
-    doc.fontSize(10).text(`${p.seat} - ${p.regno} (${p.dept})`);
+    if (!halls[p.hall_no]) halls[p.hall_no] = [];
+    halls[p.hall_no].push(p);
   });
+
+  const cols = ["A", "B", "C", "D"];
+  const cellWidth = 135;
+  const cellHeight = 70;
+
+  Object.keys(halls).forEach((hallNo, index) => {
+    if (index !== 0) doc.addPage();
+
+    const seats = halls[hallNo];
+
+    // ===== HEADER CARD =====
+    const headerX = 30;
+    const headerY = 20;
+    const headerWidth = doc.page.width - 60;
+    const headerHeight = 90;
+
+    doc
+      .roundedRect(headerX, headerY, headerWidth, headerHeight, 12)
+      .fill("#0f172a");
+
+    // Title
+    doc
+      .fillColor("#ffffff")
+      .fontSize(16)
+      .text("EXAM HALL SEATING ARRANGEMENT", headerX, headerY + 14, {
+        width: headerWidth,
+        align: "center",
+      });
+
+    // Date & Session
+    doc
+      .fontSize(10)
+      .text(`Date: ${date}   |   Session: ${session}`, headerX, headerY + 38, {
+        width: headerWidth,
+        align: "center",
+      });
+
+    // Hall + Invigilator (inside header)
+    doc
+      .fontSize(11)
+      .text(
+        `Hall: ${hallNo}        Invigilator: ${seats[0].invigilator}`,
+        headerX,
+        headerY + 62,
+        { width: headerWidth, align: "center" },
+      );
+
+    // Reset for body
+    doc.fillColor("#000000");
+    doc.y = headerY + headerHeight + 20;
+
+    /* ---------- BUILD SEAT GRID ---------- */
+
+    const seatMap = {};
+    seats.forEach((s) => (seatMap[s.seat] = s));
+
+    const maxRow = Math.max(...seats.map((s) => parseInt(s.seat.slice(1))));
+
+    // Center grid horizontally
+    let x = (doc.page.width - cols.length * cellWidth) / 2;
+
+    let y = doc.y;
+
+    /* COLUMN HEADERS */
+    cols.forEach((c, i) => {
+      doc
+        .roundedRect(x + i * cellWidth, y, cellWidth - 10, 38, 8)
+        .fill("#1e293b");
+
+      doc
+        .fillColor("#ffffff")
+        .fontSize(13)
+        .text(c, x + i * cellWidth, y + 10, {
+          width: cellWidth - 10,
+          align: "center",
+        });
+
+      doc.fillColor("#000000");
+    });
+
+    y += 50;
+
+    /* SEAT CARDS */
+    for (let r = 1; r <= maxRow; r++) {
+      cols.forEach((c, i) => {
+        const key = c + r;
+        const s = seatMap[key];
+
+        const boxX = x + i * cellWidth;
+        const boxY = y;
+
+        doc
+          .roundedRect(boxX, boxY, cellWidth - 10, cellHeight, 8)
+          .stroke("#cbd5e1");
+
+        if (s) {
+          doc
+            .fontSize(10)
+            .fillColor("#0f172a")
+            .text(key, boxX, boxY + 10, {
+              width: cellWidth - 10,
+              align: "center",
+            });
+
+          doc
+            .fontSize(11)
+            .fillColor("#0f172a")
+            .text(String(s.regno).replace(/\.0$/, ""), boxX, boxY + 28, {
+              width: cellWidth - 10,
+              align: "center",
+            });
+
+          doc
+            .fontSize(9)
+            .fillColor("#475569")
+            .text(s.dept, boxX, boxY + 48, {
+              width: cellWidth - 10,
+              align: "center",
+            });
+        }
+      });
+
+      y += cellHeight + 14;
+
+      if (y + cellHeight > doc.page.height - 40) {
+        doc.addPage();
+        y = 90;
+      }
+    }
+  })
 
   doc.end();
 });
