@@ -571,10 +571,163 @@ app.get("/allocation/pdf", requireLogin, (req, res) => {
         y = 90;
       }
     }
-  })
+  });
 
   doc.end();
 });
+app.get("/allocation/pdf-summary", requireLogin, (req, res) => {
+  if (!req.session.preview || req.session.preview.length === 0) {
+    return res.send("No allocation preview found");
+  }
+
+  const PDFDocument = require("pdfkit");
+
+  // LANDSCAPE A4
+  const doc = new PDFDocument({
+    size: "A4",
+    layout: "landscape",
+    margin: 30,
+  });
+
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader(
+    "Content-Disposition",
+    "inline; filename=Hall_Allocation_Summary_Landscape.pdf",
+  );
+
+  doc.pipe(res);
+
+  const preview = req.session.preview;
+  const examDate = preview[0].exam_date;
+  const session = preview[0].session;
+
+  /* ================= GROUP DATA ================= */
+  const hallMap = {};
+  preview.forEach((p) => {
+    if (!hallMap[p.hall_no]) hallMap[p.hall_no] = {};
+    if (!hallMap[p.hall_no][p.subject_code])
+      hallMap[p.hall_no][p.subject_code] = [];
+    hallMap[p.hall_no][p.subject_code].push(
+      String(p.regno).replace(/\.0$/, ""),
+    );
+  });
+
+  const hallNames = Object.keys(hallMap);
+
+  /* ================= HEADER ================= */
+  function drawHeader() {
+    doc.rect(0, 0, doc.page.width, 60).fill("#0f172a");
+
+    doc
+      .fillColor("#ffffff")
+      .fontSize(16)
+      .text("ANNA UNIVERSITY, CHENNAI – 25", 0, 16, {
+        align: "center",
+      });
+
+    doc
+      .fontSize(11)
+      .text("Examination Wing – Hall Allocation Summary", { align: "center" });
+
+    doc.fontSize(10).text(`Date / Session : ${examDate}  |  ${session}`, {
+      align: "center",
+    });
+
+    doc.fillColor("#000000");
+  }
+
+  drawHeader();
+
+  /* ================= GRID CONFIG ================= */
+  const blockWidth = 380;
+  const blockHeight = 200;
+
+  const startX = 30;
+  const startY = 80;
+
+  const gapX = 30;
+  const gapY = 20;
+
+  const hallsPerPage = 4;
+
+  /* ================= DRAW HALL BLOCK ================= */
+  function drawHallBlock(hallNo, x, y) {
+    const subjects = hallMap[hallNo];
+    let hallTotal = 0;
+
+    // Outer box
+    doc.roundedRect(x, y, blockWidth, blockHeight, 8).stroke("#94a3b8");
+
+    // Hall header
+    doc.roundedRect(x, y, blockWidth, 28, 8).fill("#1e293b");
+
+    doc
+      .fillColor("#ffffff")
+      .fontSize(12)
+      .text(`HALL : ${hallNo}`, x, y + 7, {
+        width: blockWidth,
+        align: "center",
+      });
+
+    doc.fillColor("#000000");
+
+    let cursorY = y + 36;
+
+    Object.keys(subjects).forEach((sub) => {
+      const regs = subjects[sub];
+      hallTotal += regs.length;
+
+      doc
+        .fontSize(10)
+        .fillColor("#0f172a")
+        .text(sub, x + 8, cursorY);
+
+      cursorY += 12;
+
+      doc
+        .fontSize(8)
+        .fillColor("#334155")
+        .text(regs.join(", "), x + 8, cursorY, {
+          width: blockWidth - 16,
+        });
+
+      cursorY += 22;
+    });
+
+    // Hall total
+    doc.rect(x, y + blockHeight - 26, blockWidth, 26).fill("#f1f5f9");
+
+    doc
+      .fillColor("#000000")
+      .fontSize(10)
+      .text(`HALL TOTAL : ${hallTotal}`, x, y + blockHeight - 18, {
+        width: blockWidth,
+        align: "center",
+      });
+  }
+
+  /* ================= MAIN LOOP ================= */
+  hallNames.forEach((hallNo, index) => {
+    // New page every 6 halls
+    if (index > 0 && index % hallsPerPage === 0) {
+      doc.addPage();
+      drawHeader();
+    }
+
+    const pos = index % hallsPerPage;
+    const col = pos % 2; // 0 or 1
+    const row = Math.floor(pos / 2); // 0,1,2
+
+    const x = startX + col * (blockWidth + gapX);
+    const y = startY + row * (blockHeight + gapY);
+
+    drawHallBlock(hallNo, x, y);
+  });
+
+  doc.end();
+});
+
+
 
 /* =======================
    14. SERVER
