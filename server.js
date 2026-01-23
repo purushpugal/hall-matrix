@@ -246,6 +246,27 @@ app.post("/halls/add", requireLogin, (req, res) => {
     () => res.redirect("/halls"),
   );
 });
+app.post("/halls/upload", upload.single("file"), (req, res) => {
+  const workbook = XLSX.readFile(req.file.path);
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet);
+
+  const stmt = db.prepare(
+    "INSERT INTO halls (hall_no, capacity, block) VALUES (?, ?, ?)",
+  );
+
+  rows.forEach((row) => {
+    if (row.hall_no && row.capacity && row.block) {
+      stmt.run(row.hall_no, row.capacity, row.block);
+    }
+  });
+
+  stmt.finalize();
+  fs.unlinkSync(req.file.path);
+
+  res.redirect("/halls");
+});
+
 
 app.post("/halls/delete/:id", requireLogin, (req, res) => {
   db.run("DELETE FROM halls WHERE id=?", [req.params.id], () =>
@@ -270,6 +291,26 @@ app.post("/subjects/add", requireLogin, (req, res) => {
   db.run("INSERT INTO subjects (code, name) VALUES (?,?)", [code, name], () =>
     res.redirect("/subjects"),
   );
+});
+app.post("/subjects/upload", upload.single("file"), (req, res) => {
+  const workbook = XLSX.readFile(req.file.path);
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet);
+
+  const stmt = db.prepare(
+    "INSERT INTO subjects (subject_code, subject_name) VALUES (?, ?)",
+  );
+
+  rows.forEach((row) => {
+    if (row.subject_code && row.subject_name) {
+      stmt.run(row.subject_code, row.subject_name);
+    }
+  });
+
+  stmt.finalize();
+  fs.unlinkSync(req.file.path);
+
+  res.redirect("/subjects");
 });
 
 app.post("/subjects/delete/:id", requireLogin, (req, res) => {
@@ -299,6 +340,26 @@ app.post("/invigilators/add", requireLogin, (req, res) => {
     [name, dept],
     () => res.redirect("/invigilators"),
   );
+});
+app.post("/invigilators/upload", upload.single("file"), (req, res) => {
+  const workbook = XLSX.readFile(req.file.path);
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet);
+
+  const stmt = db.prepare(
+    "INSERT INTO invigilators (name, dept) VALUES (?, ?)",
+  );
+
+  rows.forEach((row) => {
+    if (row.name && row.dept) {
+      stmt.run(row.name, row.dept);
+    }
+  });
+
+  stmt.finalize();
+  fs.unlinkSync(req.file.path);
+
+  res.redirect("/invigilators");
 });
 
 app.post("/invigilators/delete/:id", requireLogin, (req, res) => {
@@ -726,8 +787,6 @@ app.get("/allocation/pdf-summary", requireLogin, (req, res) => {
 
   doc.end();
 });
-
-
 
 /* =======================
    14. SERVER

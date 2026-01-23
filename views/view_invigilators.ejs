@@ -33,12 +33,20 @@
         <button type="submit">Add Invigilator</button>
       </form>
 </div>
+<div class="card">
+          <h3>Upload Subjects (Excel)</h3>
+          <form method="POST" action="/invigilators/upload" enctype="multipart/form-data">
+  <input type="file" name="file" accept=".xlsx" required>
+  <button type="submit">Upload Excel</button>
+</form>
+
+        </div>
            <div class="card">
           <h3>Invigilators List</h3>
       <table>
         <thead>
           <tr>
-            <th>ID</th>
+            
             <th>Name</th>
             <th>Department</th>
             <th>Action</th>
@@ -48,7 +56,7 @@
           <% if(invigilators.length > 0) { %> <% invigilators.forEach(inv => {
           %>
           <tr>
-            <td><%= inv.id %></td>
+            
             <td><%= inv.name %></td>
             <td><%= inv.dept %></td>
             <td>

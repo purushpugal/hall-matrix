@@ -32,11 +32,20 @@
     </form>
 </div>
 <div class="card">
+          <h3>Upload Subjects (Excel)</h3>
+          <form method="POST" action="/subjects/upload" enctype="multipart/form-data">
+  <input type="file" name="file" accept=".xlsx" required>
+  <button type="submit">Upload Excel</button>
+</form>
+
+        </div>
+<div class="card">
+  
           <h3>Subject List</h3>
     <table>
       <thead>
         <tr>
-          <th>ID</th>
+          
           <th>Code</th>
           <th>Name</th>
           <th>Action</th>
@@ -46,7 +55,7 @@
         <% if(subjects.length > 0) { %>
           <% subjects.forEach(subject => { %>
             <tr>
-              <td><%= subject.id %></td>
+              
               <td><%= subject.code %></td>
               <td><%= subject.name %></td>
               <td>

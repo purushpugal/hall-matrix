@@ -40,17 +40,25 @@
             <button>Add</button>
           </form>
         </div>
+<div class="card">
+          <h3>Upload Halls (Excel)</h3>
+          <form method="POST" action="/halls/upload" enctype="multipart/form-data">
+  <input type="file" name="file" accept=".xlsx" required>
+  <button type="submit">Upload Excel</button>
+</form>
 
+        </div>
         <!-- HALL TABLE -->
         <div class="card">
           <h3>Hall List</h3>
 <table>
             <thead>
               <tr>
-                <th>ID</th>
+                
                 <th>Hall No</th>
                 <th>Capacity</th>
                 <th>Block</th>
+                <th>Action</th>
               </tr>
             </thead>
 			  <tbody>
@@ -58,7 +66,7 @@
           
               <% halls.forEach(hall => { %>
               <tr>
-                <td><%= hall.id %></td>
+               
                 <td><%= hall.hall_no %></td>
                 <td><%= hall.capacity %></td>
                 <td><%= hall.block %></td>
