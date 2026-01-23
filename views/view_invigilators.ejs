@@ -21,9 +21,13 @@
       </div>
 
     <div class="main">
-        <div class="topbar">
-          <h1>Invigilators</h1>
-        </div>
+        <div class="page-header">
+  <h2>Invigilators</h2>
+
+  <a href="/dashboard" class="btn-back">
+    ← Back to Dashboard
+  </a>
+</div>
 
 <div class="card">
 <h3>Add invigilators</h3>
@@ -34,7 +38,7 @@
       </form>
 </div>
 <div class="card">
-          <h3>Upload Subjects (Excel)</h3>
+          <h3>Upload Invigilators (Excel)</h3>
           <form method="POST" action="/invigilators/upload" enctype="multipart/form-data">
   <input type="file" name="file" accept=".xlsx" required>
   <button type="submit">Upload Excel</button>
