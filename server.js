@@ -326,26 +326,50 @@ app.post("/subjects/add", (req, res) => {
   });
 });
 
-app.post("/subjects/upload", upload.single("file"), (req, res) => {
-  const workbook = XLSX.readFile(req.file.path);
-  const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(sheet);
-
-  const stmt = db.prepare(
-    "INSERT INTO subjects (subject_code, subject_name) VALUES (?, ?)",
-  );
-
-  rows.forEach((row) => {
-    if (row.subject_code && row.subject_name) {
-      stmt.run(row.subject_code, row.subject_name);
+app.post("/students/upload", upload.single("file"), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.send("❌ No file uploaded");
     }
-  });
 
-  stmt.finalize();
-  fs.unlinkSync(req.file.path);
+    const workbook = XLSX.readFile(req.file.path);
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet);
 
-  res.redirect("/subjects");
+    if (rows.length === 0) {
+      fs.unlinkSync(req.file.path);
+      return res.send("❌ Excel file is empty");
+    }
+
+    const stmt = db.prepare(`
+      INSERT INTO students (regno, dept, subject_code)
+      VALUES (?, ?, ?)
+    `);
+
+    rows.forEach((row, index) => {
+      if (!row.regno || !row.dept || !row.subject_code) {
+        console.log(`⚠️ Skipped row ${index + 1}`, row);
+        return;
+      }
+
+      stmt.run(row.regno, row.dept, row.subject_code, (err) => {
+        if (err) {
+          console.log("DB ERROR (students):", err.message);
+        }
+      });
+    });
+
+    stmt.finalize();
+    fs.unlinkSync(req.file.path);
+
+    res.redirect("/students");
+  } catch (err) {
+    console.error("UPLOAD ERROR (students):", err);
+    res.send("❌ Failed to upload students Excel");
+  }
 });
+
 
 app.post("/subjects/delete/:id", requireLogin, (req, res) => {
   db.run("DELETE FROM subjects WHERE id=?", [req.params.id], () =>

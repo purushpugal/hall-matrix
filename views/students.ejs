@@ -58,13 +58,14 @@
         <div class="card">
           <h3>Upload Students (Excel)</h3>
           <form
-            method="POST"
-            action="/students/upload"
-            enctype="multipart/form-data"
-          >
-            <input type="file" name="excelFile" required />
-            <button type="submit">Upload</button>
-          </form>
+  action="/students/upload"
+  method="POST"
+  enctype="multipart/form-data"
+>
+  <input type="file" name="file" accept=".xlsx" required>
+  <button type="submit" class="btn-primary">Upload</button>
+</form>
+
         </div>
 
         <!-- STUDENT TABLE -->
