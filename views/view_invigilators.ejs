@@ -53,7 +53,7 @@
             
             <th>Name</th>
             <th>Department</th>
-            <th>Action</th>
+            <th style="text-align:center;">Action</th>
           </tr>
         </thead>
         <tbody>
@@ -63,7 +63,7 @@
             
             <td><%= inv.name %></td>
             <td><%= inv.dept %></td>
-            <td>
+            <td style="text-align:center;">
               <form
                 action="/invigilators/delete/<%= inv.id %>"
                 method="POST"

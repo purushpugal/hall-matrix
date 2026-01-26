@@ -93,13 +93,14 @@
                 <td><%= student.dept %></td>
                 <td><%= student.subject_code %></td>
                 <td>
+                 
                   <form
-                    method="POST"
-                    action="/students/delete/<%= student.id %>"
-                    onsubmit="return confirm('Delete this student?')"
-                  >
-                    <button class="danger" type="submit">Delete</button>
-                  </form>
+                action="/students/delete/<%= student.id %>"
+                method="POST"
+                onsubmit="return confirm('Delete this Student?');"
+              >
+                <button type="submit">Delete</button>
+              </form>
                 </td>
               </tr>
               <% }) %>

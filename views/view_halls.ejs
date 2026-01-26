@@ -74,14 +74,15 @@
                 <td><%= hall.hall_no %></td>
                 <td><%= hall.capacity %></td>
                 <td><%= hall.block %></td>
-                <td>
+                <td style="text-align:center;">
+                  
                   <form
-                    method="POST"
-                    action="/halls/delete/<%= hall.id %>"
-                    onsubmit="return confirm('Delete this hall?')"
-                  >
-                    <button class="danger" type="submit">Delete</button>
-                  </form>
+                action="/halls/delete/<%= hall.id %>"
+                method="POST"
+                onsubmit="return confirm('Delete this Hall?');"
+              >
+                <button type="submit">Delete</button>
+              </form>
                 </td>
               </tr>
               <% }) %>

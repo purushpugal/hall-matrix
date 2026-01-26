@@ -99,11 +99,14 @@ db.serialize(() => {
     block TEXT
   )`);
 
-  db.run(`CREATE TABLE IF NOT EXISTS subjects (
+ db.run(`
+  CREATE TABLE IF NOT EXISTS subjects (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    code TEXT UNIQUE,
-    name TEXT
-  )`);
+    subject_code TEXT UNIQUE NOT NULL,
+    subject_name TEXT NOT NULL
+  )
+`);
+
 
   db.run(`CREATE TABLE IF NOT EXISTS invigilators (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -195,30 +198,48 @@ app.post("/students/add", requireLogin, (req, res) => {
   );
 });
 
-app.post(
-  "/students/upload",
-  requireLogin,
-  upload.single("excelFile"),
-  (req, res) => {
+app.post("/subjects/upload", upload.single("file"), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.send("❌ No file uploaded");
+    }
+
     const workbook = XLSX.readFile(req.file.path);
-    const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const data = XLSX.utils.sheet_to_json(sheet);
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet);
+
+    if (rows.length === 0) {
+      fs.unlinkSync(req.file.path);
+      return res.send("❌ Excel file is empty");
+    }
 
     const stmt = db.prepare(
-      "INSERT INTO students (regno, dept, subject_code) VALUES (?,?,?)",
+      "INSERT INTO subjects (subject_code, subject_name) VALUES (?, ?)",
     );
 
-    data.forEach((r) => {
-      if (r.regno && r.dept && r.subject_code) {
-        stmt.run(r.regno, r.dept, r.subject_code);
+    rows.forEach((row, index) => {
+      if (!row.subject_code || !row.subject_name) {
+        console.log(`⚠️ Skipped row ${index + 1}`, row);
+        return;
       }
+
+      stmt.run(row.subject_code, row.subject_name, (err) => {
+        if (err) {
+          console.log("DB ERROR (subjects):", err.message);
+        }
+      });
     });
 
     stmt.finalize();
     fs.unlinkSync(req.file.path);
-    res.redirect("/students");
-  },
-);
+
+    res.redirect("/subjects?uploaded=1");
+  } catch (err) {
+    console.error("UPLOAD ERROR (subjects):", err);
+    res.send("❌ Failed to process Excel file");
+  }
+});
 
 app.post("/students/delete/:id", requireLogin, (req, res) => {
   db.run("DELETE FROM students WHERE id=?", [req.params.id], () =>
@@ -286,12 +307,25 @@ app.get("/subjects", requireLogin, (req, res) => {
   });
 });
 
-app.post("/subjects/add", requireLogin, (req, res) => {
-  const { code, name } = req.body;
-  db.run("INSERT INTO subjects (code, name) VALUES (?,?)", [code, name], () =>
-    res.redirect("/subjects"),
-  );
+app.post("/subjects/add", (req, res) => {
+  const { subject_code, subject_name } = req.body;
+
+  const sql = `
+    INSERT INTO subjects (subject_code, subject_name)
+    VALUES (?, ?)
+  `;
+
+  db.run(sql, [subject_code, subject_name], (err) => {
+    if (err) {
+      if (err.message.includes("UNIQUE")) {
+        return res.send("❌ Subject code already exists");
+      }
+      return res.send("Database error");
+    }
+    res.redirect("/subjects");
+  });
 });
+
 app.post("/subjects/upload", upload.single("file"), (req, res) => {
   const workbook = XLSX.readFile(req.file.path);
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -342,25 +376,48 @@ app.post("/invigilators/add", requireLogin, (req, res) => {
   );
 });
 app.post("/invigilators/upload", upload.single("file"), (req, res) => {
-  const workbook = XLSX.readFile(req.file.path);
-  const sheet = workbook.Sheets[workbook.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(sheet);
-
-  const stmt = db.prepare(
-    "INSERT INTO invigilators (name, dept) VALUES (?, ?)",
-  );
-
-  rows.forEach((row) => {
-    if (row.name && row.dept) {
-      stmt.run(row.name, row.dept);
+  try {
+    if (!req.file) {
+      return res.send("❌ No file uploaded");
     }
-  });
 
-  stmt.finalize();
-  fs.unlinkSync(req.file.path);
+    const workbook = XLSX.readFile(req.file.path);
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json(sheet);
 
-  res.redirect("/invigilators");
+    if (rows.length === 0) {
+      fs.unlinkSync(req.file.path);
+      return res.send("❌ Excel file is empty");
+    }
+
+    const stmt = db.prepare(
+      "INSERT INTO invigilators (name, dept) VALUES (?, ?)",
+    );
+
+    rows.forEach((row, index) => {
+      if (!row.name || !row.dept) {
+        console.log(`⚠️ Skipped row ${index + 1}`, row);
+        return;
+      }
+
+      stmt.run(row.name, row.dept, (err) => {
+        if (err) {
+          console.log("DB ERROR (invigilators):", err.message);
+        }
+      });
+    });
+
+    stmt.finalize();
+    fs.unlinkSync(req.file.path);
+
+    res.redirect("/invigilators?uploaded=1");
+  } catch (err) {
+    console.error("UPLOAD ERROR (invigilators):", err);
+    res.send("❌ Failed to process Excel file");
+  }
 });
+
 
 app.post("/invigilators/delete/:id", requireLogin, (req, res) => {
   db.run("DELETE FROM invigilators WHERE id=?", [req.params.id], () =>
