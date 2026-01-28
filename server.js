@@ -198,53 +198,85 @@ app.post("/students/add", requireLogin, (req, res) => {
   );
 });
 
-app.post("/subjects/upload", upload.single("file"), (req, res) => {
-  try {
-    if (!req.file) {
-      return res.send("❌ No file uploaded");
-    }
-
-    const workbook = XLSX.readFile(req.file.path);
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json(sheet);
-
-    if (rows.length === 0) {
-      fs.unlinkSync(req.file.path);
-      return res.send("❌ Excel file is empty");
-    }
-
-    const stmt = db.prepare(
-      "INSERT INTO subjects (subject_code, subject_name) VALUES (?, ?)",
-    );
-
-    rows.forEach((row, index) => {
-      if (!row.subject_code || !row.subject_name) {
-        console.log(`⚠️ Skipped row ${index + 1}`, row);
-        return;
-      }
-
-      stmt.run(row.subject_code, row.subject_name, (err) => {
-        if (err) {
-          console.log("DB ERROR (subjects):", err.message);
-        }
-      });
-    });
-
-    stmt.finalize();
-    fs.unlinkSync(req.file.path);
-
-    res.redirect("/subjects?uploaded=1");
-  } catch (err) {
-    console.error("UPLOAD ERROR (subjects):", err);
-    res.send("❌ Failed to process Excel file");
+app.post("/students/upload", upload.single("file"), (req, res) => {
+  if (!req.file) {
+    return res.send("No file uploaded");
   }
+
+  const workbook = XLSX.readFile(req.file.path);
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet);
+
+  const stmt = db.prepare(
+    "INSERT OR IGNORE INTO students (regno, dept, subject_code) VALUES (?,?,?)",
+  );
+
+  rows.forEach((r) => {
+    if (r.regno && r.dept && r.subject_code) {
+      stmt.run(r.regno, r.dept, r.subject_code);
+    }
+  });
+
+  stmt.finalize();
+  fs.unlinkSync(req.file.path);
+  res.redirect("/students");
 });
+
 
 app.post("/students/delete/:id", requireLogin, (req, res) => {
   db.run("DELETE FROM students WHERE id=?", [req.params.id], () =>
     res.redirect("/students"),
   );
+});
+app.get("/student-view", (req, res) => {
+  const regno = req.query.regno;
+  let student = null;
+
+  if (regno && req.session.preview) {
+    student = req.session.preview.find(
+      (p) => String(p.regno) === String(regno),
+    );
+  }
+
+  res.render("student-view", {
+    student,
+    searched: !!regno,
+  });
+});
+
+app.post("/student-view", (req, res) => {
+  const { regno } = req.body;
+
+  if (!req.session.preview || req.session.preview.length === 0) {
+    return res.render("student_view", {
+      result: null,
+      error: "Allocation not generated yet",
+    });
+  }
+
+  const found = req.session.preview.find(
+    (s) => String(s.regno) === String(regno),
+  );
+
+  if (!found) {
+    return res.render("student_view", {
+      result: null,
+      error: "No hall details found for this register number",
+    });
+  }
+
+  res.render("student_view", {
+    result: {
+      regno: found.regno,
+      hall: found.hall_no,
+      seat: found.seat,
+      subject: found.subject_code,
+      invigilator: found.invigilator,
+      date: req.session.examDate || "N/A",
+      session: req.session.examSession || "N/A",
+    },
+    error: null,
+  });
 });
 
 /* =======================
@@ -310,64 +342,37 @@ app.get("/subjects", requireLogin, (req, res) => {
 app.post("/subjects/add", (req, res) => {
   const { subject_code, subject_name } = req.body;
 
-  const sql = `
-    INSERT INTO subjects (subject_code, subject_name)
-    VALUES (?, ?)
-  `;
-
-  db.run(sql, [subject_code, subject_name], (err) => {
-    if (err) {
-      if (err.message.includes("UNIQUE")) {
-        return res.send("❌ Subject code already exists");
+  db.run(
+    "INSERT OR IGNORE INTO subjects (subject_code, subject_name) VALUES (?, ?)",
+    [subject_code, subject_name],
+    (err) => {
+      if (err) {
+        console.error("Subject insert error:", err.message);
       }
-      return res.send("Database error");
-    }
-    res.redirect("/subjects");
-  });
+      res.redirect("/subjects");
+    },
+  );
 });
 
-app.post("/students/upload", upload.single("file"), (req, res) => {
-  try {
-    if (!req.file) {
-      return res.send("❌ No file uploaded");
+app.post("/subjects/upload", upload.single("file"), (req, res) => {
+  const workbook = XLSX.readFile(req.file.path);
+  const sheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet);
+
+  const stmt = db.prepare(
+    "INSERT INTO subjects (subject_code, subject_name) VALUES (?, ?)",
+  );
+
+  rows.forEach((row) => {
+    if (row.subject_code && row.subject_name) {
+      stmt.run(row.subject_code, row.subject_name);
     }
+  });
 
-    const workbook = XLSX.readFile(req.file.path);
-    const sheetName = workbook.SheetNames[0];
-    const sheet = workbook.Sheets[sheetName];
-    const rows = XLSX.utils.sheet_to_json(sheet);
+  stmt.finalize();
+  fs.unlinkSync(req.file.path);
 
-    if (rows.length === 0) {
-      fs.unlinkSync(req.file.path);
-      return res.send("❌ Excel file is empty");
-    }
-
-    const stmt = db.prepare(`
-      INSERT INTO students (regno, dept, subject_code)
-      VALUES (?, ?, ?)
-    `);
-
-    rows.forEach((row, index) => {
-      if (!row.regno || !row.dept || !row.subject_code) {
-        console.log(`⚠️ Skipped row ${index + 1}`, row);
-        return;
-      }
-
-      stmt.run(row.regno, row.dept, row.subject_code, (err) => {
-        if (err) {
-          console.log("DB ERROR (students):", err.message);
-        }
-      });
-    });
-
-    stmt.finalize();
-    fs.unlinkSync(req.file.path);
-
-    res.redirect("/students");
-  } catch (err) {
-    console.error("UPLOAD ERROR (students):", err);
-    res.send("❌ Failed to upload students Excel");
-  }
+  res.redirect("/subjects");
 });
 
 
