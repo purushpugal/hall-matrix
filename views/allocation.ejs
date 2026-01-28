@@ -32,7 +32,7 @@
     ← Back to Dashboard
   </a>
 </div>
-
+<div class="card">
     <div class="card">
       <form method="POST" action="/allocation/generate" class="form-inline">
         <input name="subject_codes" placeholder="CS101,CS102" required>
@@ -46,6 +46,43 @@
       </form>
     </div>
   </div>
+<div style="margin-bottom: 20px; display:flex; gap:12px; flex-wrap:wrap;">
+
+  <!-- Hall Seating PDF -->
+  <a
+    href="/allocation/pdf-hall"
+    target="_blank"
+    class="pdf-btn"
+    style="
+      padding:10px 20px;
+      background:#16a34a;
+      color:white;
+      border-radius:6px;
+      text-decoration:none;
+      font-weight:600;
+    "
+  >
+    🪑 Download Hall Seating PDF
+  </a>
+
+  <!-- Summary PDF -->
+  <a
+    href="/allocation/pdf-summary"
+    target="_blank"
+    class="pdf-btn"
+    style="
+      padding:10px 20px;
+      background:#0f172a;
+      color:white;
+      border-radius:6px;
+      text-decoration:none;
+      font-weight:600;
+    "
+  >
+    📊 Download Hall Summary PDF
+  </a>
+
+</div>
 
 </div>
 

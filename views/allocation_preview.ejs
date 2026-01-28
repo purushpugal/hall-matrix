@@ -2,6 +2,7 @@
 <html>
 <head>
   <title>Exam Allocation Preview</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -58,50 +59,35 @@
       font-size: 12px;
       color: #555;
     }
-  </style>
-  <div style="margin-bottom: 20px;">
-  <a href="/allocation/pdf" target="_blank">
-    <button style="
+
+    .confirm-btn {
       padding: 10px 20px;
-      background: #16a34a;
-      color: white;
+      font-size: 16px;
+      background: #2563eb;
+      color: #fff;
       border: none;
-      border-radius: 5px;
+      border-radius: 4px;
       cursor: pointer;
-      font-size: 15px;
-    ">
-      ⬇ Download PDF
-    </button>
-  </a>
-  <a
-  href="/allocation/pdf-summary"
-  target="_blank"
-  style="
-    display:inline-block;
-    margin-top:12px;
-    padding:10px 16px;
-    background:#0f172a;
-    color:white;
-    border-radius:6px;
-    text-decoration:none;
-    font-weight:600;
-  "
->
-  📄 Download Hall Summary PDF
-</a>
-
-</div>
-
+    }
+  </style>
 </head>
+
 <body>
 
 <h2>Exam Allocation Preview</h2>
-<p>Date: <%= date %> | Session: <%= session %></p>
+<p>
+  Date: <%= preview[0].exam_date %> |
+  Session: <%= preview[0].session %>
+</p>
 
 <%
-  // Group preview data by hall
+  /* ===============================
+     GROUP BY HALL
+  =============================== */
   const halls = {};
+
   preview.forEach(p => {
+    if (!p || !p.hall_no || !p.seat_label) return;
     if (!halls[p.hall_no]) halls[p.hall_no] = [];
     halls[p.hall_no].push(p);
   });
@@ -112,20 +98,19 @@
 <% Object.keys(halls).forEach(hallNo => { 
      const seats = halls[hallNo];
 
-     // Map seats by seat label (A1, B1, ...)
+     /* Map seats by seat_label (A1, B1, ...) */
      const seatMap = {};
-     seats.forEach(s => seatMap[s.seat] = s);
+     seats.forEach(s => seatMap[s.seat_label] = s);
 
      const maxRow = Math.max(
-       ...seats.map(s => parseInt(s.seat.slice(1)))
+       ...seats.map(s => parseInt(s.seat_label.slice(1)))
      );
 %>
-
 
 <div class="hall-card">
   <div class="hall-title">
     Hall: <%= hallNo %> |
-    Invigilator: <%= seats[0].invigilator %>
+    Invigilator: <%= seats[0].invigilator || "N/A" %>
   </div>
 
   <table>
@@ -145,9 +130,11 @@
           <td>
             <% if (s) { %>
               <div class="seat"><%= seatKey %></div>
-            <div class="regno"><%= String(s.regno).replace(/\.0$/, '') %></div>
-
+              <div class="regno">
+                <%= String(s.regno).replace(/\.0$/, "") %>
+              </div>
               <div class="dept">(<%= s.dept %>)</div>
+              <div class="dept"><%= s.subject_code %></div>
             <% } else { %>
               &nbsp;
             <% } %>
@@ -159,6 +146,12 @@
 </div>
 
 <% }) %>
+
+<form method="POST" action="/allocation/confirm">
+  <button class="confirm-btn" type="submit">
+    Confirm Allocation
+  </button>
+</form>
 
 </body>
 </html>

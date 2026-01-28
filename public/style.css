@@ -343,3 +343,86 @@ td {
   transform: translateY(-5px);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
 }
+/* ===== EXAM PREVIEW HEADER ===== */
+.exam-header {
+  background: linear-gradient(90deg, #0f172a, #1e293b);
+  color: #fff;
+  padding: 18px 20px;
+  border-radius: 14px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.exam-header h2 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 0.5px;
+}
+
+.exam-header p {
+  margin: 6px 0 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* ===== SEAT GRID ===== */
+.seat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+  margin-top: 20px;
+}
+
+/* ===== COLUMN ===== */
+.seat-col {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Column header A B C D */
+.col-title {
+  background: #0f172a;
+  color: white;
+  text-align: center;
+  padding: 8px 0;
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* ===== SEAT BOX ===== */
+.seat-box {
+  border: 2px solid #cbd5f5;
+  border-radius: 12px;
+  padding: 10px 6px;
+  text-align: center;
+  background: #ffffff;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.06);
+}
+
+.seat-no {
+  font-size: 12px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 6px;
+}
+
+.regno {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.dept {
+  font-size: 11px;
+  color: #475569;
+  margin-top: 4px;
+}
+
+/* ===== RESPONSIVE (optional) ===== */
+@media (max-width: 900px) {
+  .seat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

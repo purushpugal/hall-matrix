@@ -10,23 +10,21 @@
 <div class="container">
 
   <!-- SIDEBAR -->
-  
-      <div class="sidebar">
-        <h2>Hall Matrix</h2>	
-        <ul>
-          <li><a href="/dashboard">Dashboard</a></li>
-          <li><a href="/students">🎓 Students</a></li>
-          <li ><a href="/halls"> 🏫 Halls</a></li>
-          <li ><a href="/subjects"> 📘 Subjects</a></li>
-          <li><a href="/invigilators"> 👨‍🏫 Invigilators</a></li>
-          <li><a href="/allocation"> 🧮 Allocation</a></li> 
-           <li class="active">
-      <a href="/student-view"> 🎓 Student View </a>
-    </li>
-          <li><a href="/logout">Logout</a></li>
-         
-        </ul>
-      </div>
+  <div class="sidebar">
+    <h2>Hall Matrix</h2>
+    <ul>
+      <li><a href="/dashboard">Dashboard</a></li>
+      <li><a href="/students">🎓 Students</a></li>
+      <li><a href="/halls">🏫 Halls</a></li>
+      <li><a href="/subjects">📘 Subjects</a></li>
+      <li><a href="/invigilators">👨‍🏫 Invigilators</a></li>
+      <li><a href="/allocation">🧮 Allocation</a></li>
+      <li class="active">
+        <a href="/student-view">🎓 Student View</a>
+      </li>
+      <li><a href="/logout">Logout</a></li>
+    </ul>
+  </div>
 
   <!-- MAIN CONTENT -->
   <div class="main">
@@ -42,58 +40,54 @@
         <input
           type="text"
           name="regno"
-          placeholder="e.g. 21CS045"
+          placeholder="e.g. 920324210001"
           required
         >
         <button type="submit" class="pdf-btn">Search</button>
       </form>
     </div>
 
-    <!-- RESULT -->
-    <% if (searched) { %>
+    <!-- ERROR MESSAGE -->
+    <% if (error) { %>
+      <div class="card">
+        <p style="color:red;">❌ <%= error %></p>
+      </div>
+    <% } %>
 
-      <% if (!student) { %>
-        <div class="card">
-          <p style="color:red;">❌ No allocation found for this Register Number</p>
-        </div>
-      <% } else { %>
+    <!-- RESULT CARD -->
+    <% if (result) { %>
+      <div class="card">
+        <h3>🎓 Seat Allocation Details</h3>
 
-        <div class="card">
-          <h3>🎓 Seat Allocation Details</h3>
-
-          <table class="seat-table">
-            <tbody>
-              <tr>
-                <th>Register No</th>
-                <td><%= student.regno %></td>
-              </tr>
-              <tr>
-                <th>Department</th>
-                <td><%= student.dept %></td>
-              </tr>
-              <tr>
-                <th>Subject</th>
-                <td><%= student.subject_code %></td>
-              </tr>
-              <tr>
-                <th>Hall No</th>
-                <td><%= student.hall_no %></td>
-              </tr>
-              <tr>
-                <th>Seat No</th>
-                <td><strong><%= student.seat %></strong></td>
-              </tr>
-              <tr>
-                <th>Invigilator</th>
-                <td><%= student.invigilator %></td>
-              </tr>
-            </tbody>
-          </table>
-
-        </div>
-
-      <% } %>
-
+        <table class="seat-table">
+          <tbody>
+            <tr>
+              <th>Register No</th>
+              <td><%= result.regno %></td>
+            </tr>
+            <tr>
+              <th>Department</th>
+              <td><%= result.dept %></td>
+            </tr>
+            <tr>
+              <th>Subject</th>
+              <td><%= result.subject_code %></td>
+            </tr>
+            <tr>
+              <th>Hall No</th>
+              <td><%= result.hall_no %></td>
+            </tr>
+            <tr>
+              <th>Seat No</th>
+              <td><strong><%= result.seat_label %></strong></td>
+            </tr>
+            <tr>
+              <th>Invigilator</th>
+              <td><%= result.invigilator %></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     <% } %>
 
   </div>
