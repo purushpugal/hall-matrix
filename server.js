@@ -242,7 +242,39 @@ app.post("/subjects/add", requireLogin, (req, res) => {
     () => res.redirect("/subjects"),
   );
 });
+app.get("/subjects", requireLogin, (req, res) => {
+  db.all("SELECT * FROM subjects", (err, rows) => {
+    res.render("view_subjects", {
+      subjects: rows,
+      currentPage: "subjects",
+    });
+  });
+});
 
+app.post(
+  "/subjects/upload",
+  requireLogin,
+  upload.single("file"),
+  (req, res) => {
+    const wb = XLSX.readFile(req.file.path);
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet);
+
+    const stmt = db.prepare(
+      "INSERT OR IGNORE INTO subjects (subject_code, subject_name) VALUES (?,?)",
+    );
+
+    rows.forEach((r) => {
+      if (r.subject_code && r.subject_name) {
+        stmt.run(r.subject_code, r.subject_name);
+      }
+    });
+
+    stmt.finalize();
+    fs.unlinkSync(req.file.path);
+    res.redirect("/subjects");
+  },
+);
 app.post("/subjects/delete/:id", requireLogin, (req, res) => {
   db.run("DELETE FROM subjects WHERE id=?", [req.params.id], () =>
     res.redirect("/subjects"),
@@ -269,7 +301,25 @@ app.post("/halls/add", requireLogin, (req, res) => {
     () => res.redirect("/halls"),
   );
 });
+app.post("/halls/upload", requireLogin, upload.single("file"), (req, res) => {
+  const wb = XLSX.readFile(req.file.path);
+  const sheet = wb.Sheets[wb.SheetNames[0]];
+  const rows = XLSX.utils.sheet_to_json(sheet);
 
+  const stmt = db.prepare(
+    "INSERT OR IGNORE INTO halls (hall_no, capacity, block) VALUES (?,?,?)",
+  );
+
+  rows.forEach((r) => {
+    if (r.hall_no && r.capacity) {
+      stmt.run(r.hall_no, r.capacity, r.block || "");
+    }
+  });
+
+  stmt.finalize();
+  fs.unlinkSync(req.file.path);
+  res.redirect("/halls");
+});
 app.post("/halls/delete/:id", requireLogin, (req, res) => {
   db.run("DELETE FROM halls WHERE id=?", [req.params.id], () =>
     res.redirect("/halls"),
@@ -296,27 +346,81 @@ app.post("/invigilators/add", requireLogin, (req, res) => {
     () => res.redirect("/invigilators"),
   );
 });
+app.post(
+  "/invigilators/upload",
+  requireLogin,
+  upload.single("file"),
+  (req, res) => {
+    const wb = XLSX.readFile(req.file.path);
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(sheet);
+
+    const stmt = db.prepare(
+      "INSERT INTO invigilators (name, dept) VALUES (?,?)",
+    );
+
+    rows.forEach((r) => {
+      if (r.name && r.dept) stmt.run(r.name, r.dept);
+    });
+
+    stmt.finalize();
+    fs.unlinkSync(req.file.path);
+    res.redirect("/invigilators");
+  },
+);
 
 /* =======================
    13. STUDENT VIEW
 ======================= */
 app.get("/student-view", (req, res) => {
-  res.render("student-view", { result: null, error: null });
+  res.render("student-view", {
+    result: null,
+    error: null,
+  });
 });
 
 app.post("/student-view", (req, res) => {
   const { regno } = req.body;
+
+  if (!regno) {
+    return res.render("student-view", {
+      result: null,
+      error: "Please enter Register Number",
+    });
+  }
+
   db.get(
-    "SELECT * FROM seat_allocations WHERE regno=?",
-    [String(regno)],
+    `SELECT 
+        regno,
+        subject_code,
+        hall_no,
+        seat_label,
+        dept,
+        exam_date,
+        session,
+        invigilator
+     FROM seat_allocations
+     WHERE regno = ?`,
+    [String(regno).replace(/\.0$/, "")],
     (err, row) => {
-      if (!row)
+      if (err) {
         return res.render("student-view", {
           result: null,
-          error: "No allocation found",
+          error: "Database error",
         });
+      }
 
-      res.render("student-view", { result: row, error: null });
+      if (!row) {
+        return res.render("student-view", {
+          result: null,
+          error: "No allocation found for this Register Number",
+        });
+      }
+
+      res.render("student-view", {
+        result: row,
+        error: null,
+      });
     },
   );
 });
@@ -740,7 +844,6 @@ app.get("/allocation/pdf-summary", requireLogin, (req, res) => {
     },
   );
 });
-
 
 /* =======================
    18. SERVER

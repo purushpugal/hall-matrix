@@ -426,3 +426,70 @@ td {
     grid-template-columns: repeat(2, 1fr);
   }
 }
+/* ===============================
+   STUDENT VIEW SEARCH BOX
+================================ */
+
+.student-search-form {
+  margin-top: 10px;
+}
+
+.student-search-form label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+  color: #1f2937;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.search-box input {
+  width: 280px;
+  padding: 12px 14px;
+  font-size: 15px;
+  border-radius: 8px;
+  border: 1.5px solid #cbd5e1;
+  outline: none;
+  transition: all 0.25s ease;
+}
+
+.search-box input::placeholder {
+  color: #94a3b8;
+}
+
+.search-box input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.search-box button {
+  padding: 10px 22px;
+  font-size: 15px;
+  font-weight: 600;
+  background: #16a34a;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+.search-box button:hover {
+  background: #15803d;
+}
+
+.search-box button:active {
+  transform: scale(0.97);
+}
+.search-box button::after {
+  content: " 🔍";
+}
+@media (min-width: 1200px) {
+  .search-box input {
+    width: 360px;
+  }
+}
