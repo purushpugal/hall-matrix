@@ -35,17 +35,21 @@
 
     <!-- SEARCH CARD -->
     <div class="card">
-      <form method="GET" action="/student-view" class="student-search">
-        <label>Enter Register Number</label>
-        <div class="search-box">
-        <input
-          type="text"
-          name="regno"
-          placeholder="92032000218"
-          required
-        >
-        <button type="submit" class="pdf-btn">Search</button></div>
-      </form>
+     <form method="POST" action="/student-view" class="student-search-form">
+  <label>Enter Register Number</label>
+<div class="search-box">
+  <input
+    type="text"
+    name="regno"
+    placeholder="e.g. 920324205001"
+    required
+  />
+
+  <button type="submit" class="pdf-btn">
+    Search
+  </button></div>
+</form>
+
       
     </div>
 

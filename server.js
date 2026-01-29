@@ -380,28 +380,26 @@ app.get("/student-view", (req, res) => {
 });
 
 app.post("/student-view", (req, res) => {
-  const { regno } = req.body;
+  let regno = String(req.body.regno || "").trim();
 
-  if (!regno) {
-    return res.render("student-view", {
-      result: null,
-      error: "Please enter Register Number",
-    });
-  }
+  // 🔥 normalize
+  regno = regno.replace(/\.0$/, "");
 
   db.get(
-    `SELECT 
-        regno,
-        subject_code,
-        hall_no,
-        seat_label,
-        dept,
-        exam_date,
-        session,
-        invigilator
-     FROM seat_allocations
-     WHERE regno = ?`,
-    [String(regno).replace(/\.0$/, "")],
+    `
+    SELECT
+      REPLACE(regno, '.0', '') AS regno,
+      dept,
+      subject_code,
+      hall_no,
+      seat_label,
+      exam_date,
+      session,
+      invigilator
+    FROM seat_allocations
+    WHERE REPLACE(regno, '.0', '') = ?
+    `,
+    [regno],
     (err, row) => {
       if (err) {
         return res.render("student-view", {
@@ -413,7 +411,7 @@ app.post("/student-view", (req, res) => {
       if (!row) {
         return res.render("student-view", {
           result: null,
-          error: "No allocation found for this Register Number",
+          error: "No allocation found",
         });
       }
 
@@ -424,6 +422,8 @@ app.post("/student-view", (req, res) => {
     },
   );
 });
+
+
 
 /* =======================
    14. ALLOCATION
